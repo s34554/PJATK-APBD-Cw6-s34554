@@ -82,4 +82,22 @@ public class AppointmentsController(AppointmentService service) : ControllerBase
             return Conflict(new ErrorResponseDto { Message = ex.Message });
         }
     }
+
+    [HttpDelete("{idAppointment:int}")]
+    public async Task<IActionResult> Delete(int idAppointment)
+    {
+        try
+        {
+            await service.DeleteAsync(idAppointment);
+            return NoContent();
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new ErrorResponseDto { Message = ex.Message });
+        }
+        catch (ConflictException ex)
+        {
+            return Conflict(new ErrorResponseDto { Message = ex.Message });
+        }
+    }
 }

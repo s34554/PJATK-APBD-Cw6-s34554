@@ -213,4 +213,20 @@ public class AppointmentService(IConfiguration configuration)
     
         return (reader.GetDateTime(0), reader.GetString(1));
     }
+
+    public async Task DeleteAsync(int idAppointment)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+    
+        var (_, currentStatus) = await GetCurrentStateAsync(connection, idAppointment);
+    
+        if (currentStatus == "Completed")
+            throw new ConflictException("Cannot delete a completed appointment.");
+    
+        const string sql = "DELETE FROM dbo.Appointments WHERE IdAppointment = @IdAppointment;";
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@IdAppointment", SqlDbType.Int).Value = idAppointment;
+        await cmd.ExecuteNonQueryAsync();
+    }
 }
