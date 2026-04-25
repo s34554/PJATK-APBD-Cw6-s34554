@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WebApplication1.DTOs;
+using WebApplication1.Exceptions;
 using WebApplication1.Services;
 
 namespace WebApplication1.Controllers;
@@ -21,5 +22,33 @@ public class AppointmentsController(AppointmentService service) : ControllerBase
         var appointment = await service.GetByIdAsync(idAppointment);
         if (appointment is null) return NotFound();
         return Ok(appointment);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<AppointmentDetailsDto>> Create([FromBody] CreateAppointmentRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Reason))
+            return BadRequest(new ErrorResponseDto { Message = "Reason cannot be empty." });
+
+        if (request.Reason.Length > 250)
+            return BadRequest(new ErrorResponseDto { Message = "Reason must be at most 250 characters." });
+
+        if (request.AppointmentDate < DateTime.UtcNow)
+            return BadRequest(new ErrorResponseDto { Message = "Appointment date cannot be in the past." });
+
+        try
+        {
+            var newId = await service.CreateAsync(request);
+            var details = await service.GetByIdAsync(newId!.Value);
+            return CreatedAtAction(nameof(GetById), new { idAppointment = newId.Value }, details);
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(new ErrorResponseDto { Message = ex.Message });
+        }
+        catch (ConflictException ex)
+        {
+            return Conflict(new ErrorResponseDto { Message = ex.Message });
+        }
     }
 }
