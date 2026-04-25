@@ -51,4 +51,35 @@ public class AppointmentsController(AppointmentService service) : ControllerBase
             return Conflict(new ErrorResponseDto { Message = ex.Message });
         }
     }
+    [HttpPut("{idAppointment:int}")]
+    public async Task<IActionResult> Update(int idAppointment, [FromBody] UpdateAppointmentRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Reason))
+            return BadRequest(new ErrorResponseDto { Message = "Reason cannot be empty." });
+
+        if (request.Reason.Length > 250)
+            return BadRequest(new ErrorResponseDto { Message = "Reason must be at most 250 characters." });
+
+        var allowedStatuses = new[] { "Scheduled", "Completed", "Cancelled" };
+        if (!allowedStatuses.Contains(request.Status))
+            return BadRequest(new ErrorResponseDto { Message = "Status must be Scheduled, Completed or Cancelled." });
+        
+        try
+        {
+            await service.UpdateAsync(idAppointment, request);
+            return Ok();
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new ErrorResponseDto { Message = ex.Message });
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(new ErrorResponseDto { Message = ex.Message });
+        }
+        catch (ConflictException ex)
+        {
+            return Conflict(new ErrorResponseDto { Message = ex.Message });
+        }
+    }
 }
