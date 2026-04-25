@@ -69,7 +69,8 @@ public class AppointmentsController(AppointmentService service) : ControllerBase
         try
         {
             await service.UpdateAsync(idAppointment, request);
-            return Ok();
+            var updated = await service.GetByIdAsync(idAppointment);
+            return Ok(updated);
         }
         catch (NotFoundException ex)
         {
