@@ -35,7 +35,7 @@ public class AppointmentsController(AppointmentService service) : ControllerBase
         if (request.Reason.Length > 250)
             return BadRequest(new ErrorResponseDto { Message = "Reason must be at most 250 characters." });
 
-        if (request.AppointmentDate < DateTime.UtcNow)
+        if (request.AppointmentDate < DateTime.Now)
             return BadRequest(new ErrorResponseDto { Message = "Appointment date cannot be in the past." });
 
         try
@@ -61,6 +61,9 @@ public class AppointmentsController(AppointmentService service) : ControllerBase
 
         if (request.Reason.Length > 250)
             return BadRequest(new ErrorResponseDto { Message = "Reason must be at most 250 characters." });
+        
+        if (request.AppointmentDate < DateTime.Now)
+            return BadRequest(new ErrorResponseDto { Message = "Appointment date cannot be in the past." });
 
         var allowedStatuses = new[] { "Scheduled", "Completed", "Cancelled" };
         if (!allowedStatuses.Contains(request.Status))
