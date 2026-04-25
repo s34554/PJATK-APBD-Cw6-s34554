@@ -101,6 +101,8 @@ public class AppointmentService(IConfiguration configuration)
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
         
+        await EnsurePatientActiveAsync(connection, request.IdPatient);
+        await EnsureDoctorActiveAsync(connection, request.IdDoctor);
         await EnsureNoConflictAsync(connection, request.IdDoctor, request.AppointmentDate, excludeId: null);
         
         const string insertSql = """
