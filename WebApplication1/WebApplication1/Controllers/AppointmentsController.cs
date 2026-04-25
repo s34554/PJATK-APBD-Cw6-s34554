@@ -10,9 +10,11 @@ namespace WebApplication1.Controllers;
 public class AppointmentsController(AppointmentService service) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<AppointmentListDto>>> GetAll()
+    public async Task<ActionResult<List<AppointmentListDto>>> GetAll(
+        [FromQuery] string? status,
+        [FromQuery] string? patientLastName)
     {
-        var appointments = await service.GetAllAsync();
+        var appointments = await service.GetAllAsync(status, patientLastName);
         return Ok(appointments);
     }
 

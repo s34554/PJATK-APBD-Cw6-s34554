@@ -10,7 +10,7 @@ public class AppointmentService(IConfiguration configuration)
     private readonly string _connectionString = configuration.GetConnectionString("DefaultConnection")
                                                 ?? throw new InvalidOperationException("Missing DefaultConnection.");
 
-    public async Task<List<AppointmentListDto>> GetAllAsync()
+    public async Task<List<AppointmentListDto>> GetAllAsync(string? status, string? patientLastName)
     {
         var result = new List<AppointmentListDto>();
 
@@ -24,13 +24,17 @@ public class AppointmentService(IConfiguration configuration)
                                p.Email AS PatientEmail
                            FROM dbo.Appointments a
                            JOIN dbo.Patients p ON p.IdPatient = a.IdPatient
+                           WHERE (@Status IS NULL OR a.Status = @Status)
+                           AND (@PatientLastName IS NULL OR p.LastName = @PatientLastName)
                            ORDER BY a.AppointmentDate;
                            """;
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        await using var command = new SqlCommand(sql, connection);
-        await using var reader = await command.ExecuteReaderAsync();
+        await using var cmd = new SqlCommand(sql, connection);
+        cmd.Parameters.Add("@Status", SqlDbType.NVarChar, 30).Value = (object?)status ?? DBNull.Value;
+        cmd.Parameters.Add("@PatientLastName", SqlDbType.NVarChar, 100).Value = (object?)patientLastName ?? DBNull.Value;
+        await using var reader = await cmd.ExecuteReaderAsync();
 
         while (await reader.ReadAsync())
         {
